@@ -1,54 +1,149 @@
-<h2>Página 1</h2>
-<p>Lista de Usuários:</p>
+<div class="row">
+  <div class="col-12">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+      <div>
+        <h1 class="text-gradient">
+          <i class="fas fa-users me-2"></i>
+          Gerenciamento de Usuários
+        </h1>
+        <p class="text-muted mb-0">Visualize e gerencie os usuários cadastrados no sistema</p>
+      </div>
+      <button id="refreshUsers" class="btn btn-primary">
+        <i class="fas fa-sync-alt me-2"></i>
+        Atualizar
+      </button>
+    </div>
 
-<table border="1" id="usersTable">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Nome</th>
-      <th>Email</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td colspan="3">Carregando usuários...</td>
-    </tr>
-  </tbody>
-</table>
+    <!-- Statistics Cards -->
+    <div class="row mb-4 fade-in">
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-users fa-2x text-primary mb-2"></i>
+            <h5 class="card-title mb-0" id="totalUsers">-</h5>
+            <small class="text-muted">Total de Usuários</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-user-check fa-2x text-success mb-2"></i>
+            <h5 class="card-title mb-0">100%</h5>
+            <small class="text-muted">Usuários Ativos</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-database fa-2x text-info mb-2"></i>
+            <h5 class="card-title mb-0">PostgreSQL</h5>
+            <small class="text-muted">Banco de Dados</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+            <h5 class="card-title mb-0">UUID</h5>
+            <small class="text-muted">Chave Primária</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow-custom fade-in">
+      <div class="card-header">
+        <h4 class="card-title">
+          <i class="fas fa-table me-2"></i>
+          Lista de Usuários
+        </h4>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" id="usersTable">
+            <thead>
+              <tr>
+                <th width="20%">
+                  <i class="fas fa-fingerprint me-1"></i>
+                  ID
+                </th>
+                <th width="30%">
+                  <i class="fas fa-user me-1"></i>
+                  Nome
+                </th>
+                <th width="30%">
+                  <i class="fas fa-envelope me-1"></i>
+                  Email
+                </th>
+                <th width="20%" class="text-center">
+                  <i class="fas fa-cogs me-1"></i>
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Users will be loaded here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Information -->
+    <div class="row mt-4 fade-in">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title">
+              <i class="fas fa-info-circle me-2"></i>
+              Informações da API
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Endpoints Disponíveis:</h6>
+                <ul class="list-unstyled">
+                  <li><code class="text-primary">GET /users</code> - Listar usuários</li>
+                  <li><code class="text-success">POST /users</code> - Criar usuário</li>
+                  <li><code class="text-info">GET /users/:id</code> - Buscar por ID</li>
+                  <li><code class="text-warning">PUT /users/:id</code> - Atualizar usuário</li>
+                  <li><code class="text-danger">DELETE /users/:id</code> - Excluir usuário</li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Exemplo de Uso:</h6>
+                <pre class="bg-light p-3 rounded"><code>// Buscar todos os usuários
+fetch('/users')
+  .then(response => response.json())
+  .then(users => console.log(users));</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-  // Função para buscar usuários da API e renderizar na tabela
-  async function fetchUsers() {
-    try {
-      const response = await fetch('/users');
-      if (!response.ok) {
-        throw new Error('Erro ao buscar usuários');
-      }
-      const users = await response.json();
+// Update the total users counter
+function updateUserStats(count) {
+  document.getElementById('totalUsers').textContent = count;
+}
 
-      const tableBody = document.querySelector('#usersTable tbody');
-      tableBody.innerHTML = ''; // Limpa o conteúdo anterior
-
-      if (users.length > 0) {
-        users.forEach(user => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-          `;
-          tableBody.appendChild(row);
-        });
-      } else {
-        tableBody.innerHTML = '<tr><td colspan="3">Nenhum usuário encontrado.</td></tr>';
-      }
-    } catch (error) {
-      console.error(error);
-      const tableBody = document.querySelector('#usersTable tbody');
-      tableBody.innerHTML = '<tr><td colspan="3">Erro ao carregar usuários.</td></tr>';
-    }
-  }
-
-  // Chama a função ao carregar a página
-  fetchUsers();
+// Override the default loadUsers to update stats
+const originalLoadUsers = userManager.loadUsers;
+userManager.loadUsers = async function() {
+  await originalLoadUsers.call(this);
+  
+  // Count visible user rows
+  const userRows = document.querySelectorAll('#usersTable .user-row');
+  updateUserStats(userRows.length);
+};
 </script>

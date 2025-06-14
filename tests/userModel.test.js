@@ -1,58 +1,46 @@
-const db = require('../config/db');
-const User = require('../models/userModel');
+const UserModel = require('../models/userModel');
 
-jest.mock('../config/db');
-
-describe('User Model', () => {
-  test('deve obter todos os usuários', async () => {
-    db.query.mockResolvedValue({ rows: [{ id: 1, name: 'John Doe', email: 'john@example.com' }] });
-
-    const users = await User.getAll();
-
-    expect(users).toEqual([{ id: 1, name: 'John Doe', email: 'john@example.com' }]);
+describe('UserModel', () => {
+  test('deve validar dados de usuário para criação', () => {
+    const validData = { name: 'John Doe', email: 'john@example.com' };
+    const result = UserModel.validate(validData);
+    expect(result).toEqual(validData);
   });
 
-  test('deve obter um usuário pelo ID', async () => {
-    db.query.mockResolvedValue({ rows: [{ id: 1, name: 'John Doe', email: 'john@example.com' }] });
-
-    const user = await User.getById(1);
-
-    expect(user).toEqual({ id: 1, name: 'John Doe', email: 'john@example.com' });
+  test('deve rejeitar dados inválidos para criação', () => {
+    const invalidData = { name: '', email: 'invalid-email' };
+    expect(() => UserModel.validate(invalidData)).toThrow('Erro de validação');
   });
 
-  test('deve criar um novo usuário', async () => {
-    db.query.mockResolvedValue({
-      rows: [{ id: 1, name: 'John Doe', email: 'john@example.com' }],
-    });
-
-    const newUser = await User.create({ name: 'John Doe', email: 'john@example.com' });
-
-    expect(newUser).toEqual({ id: 1, name: 'John Doe', email: 'john@example.com' });
+  test('deve validar dados para atualização', () => {
+    const validData = { name: 'John Doe Updated' };
+    const result = UserModel.validate(validData, true);
+    expect(result).toEqual(validData);
   });
 
-  test('deve atualizar um usuário', async () => {
-    db.query.mockResolvedValue({
-      rows: [{ id: 1, name: 'John Doe', email: 'john@example.com' }],
-    });
-
-    const updatedUser = await User.update(1, { name: 'John Doe', email: 'john@example.com' });
-
-    expect(updatedUser).toEqual({ id: 1, name: 'John Doe', email: 'john@example.com' });
+  test('deve validar ID', () => {
+    expect(UserModel.validateId('1')).toBe(1);
+    expect(UserModel.validateId(5)).toBe(5);
+    expect(() => UserModel.validateId('invalid')).toThrow('ID inválido');
+    expect(() => UserModel.validateId(0)).toThrow('ID inválido');
+    expect(() => UserModel.validateId(-1)).toThrow('ID inválido');
   });
 
-  test('deve deletar um usuário', async () => {
-    db.query.mockResolvedValue({ rowCount: 1 });
-
-    const isDeleted = await User.delete(1);
-
-    expect(isDeleted).toBe(true);
+  test('deve validar email', () => {
+    expect(UserModel.validateEmail('john@example.com')).toBe('john@example.com');
+    expect(() => UserModel.validateEmail('invalid-email')).toThrow('Email inválido');
   });
 
-  test('deve retornar false se o usuário não for encontrado para deleção', async () => {
-    db.query.mockResolvedValue({ rowCount: 0 });
+  test('deve rejeitar nome muito curto', () => {
+    const invalidData = { name: 'J', email: 'john@example.com' };
+    expect(() => UserModel.validate(invalidData)).toThrow('Erro de validação');
+  });
 
-    const isDeleted = await User.delete(2);
-
-    expect(isDeleted).toBe(false);
+  test('deve rejeitar nome muito longo', () => {
+    const invalidData = { 
+      name: 'a'.repeat(101), 
+      email: 'john@example.com' 
+    };
+    expect(() => UserModel.validate(invalidData)).toThrow('Erro de validação');
   });
 });

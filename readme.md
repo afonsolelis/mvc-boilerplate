@@ -1,83 +1,167 @@
-# Boilerplate MVC em Node.js com PostgreSQL
+# MVC Boilerplate - Node.js com PostgreSQL
 
-Este projeto é um boilerplate básico para uma aplicação Node.js seguindo o padrão MVC (Model-View-Controller), utilizando PostgreSQL como banco de dados.
+Uma aplicação completa seguindo o padrão MVC (Model-View-Controller) com Node.js, Express, PostgreSQL e interface web com EJS.
 
-## Requisitos
+## 🚀 Funcionalidades
 
-- Node.js (versão X.X.X)
-- PostgreSQL (versão X.X.X)
+- **CRUD Completo de Usuários**: API REST para gerenciamento de usuários
+- **Interface Web**: Frontend com EJS para visualização dos dados
+- **Padrão MVC**: Arquitetura bem estruturada e organizada
+- **Validação de Dados**: Validação usando Joi
+- **Testes Automatizados**: Cobertura completa com Jest
+- **PostgreSQL**: Banco de dados robusto com UUID como chave primária
+- **Repository Pattern**: Separação clara entre camadas de dados
 
-## Instalação
+## 📋 Requisitos
 
-1. **Clonar o repositório:**
+- Node.js (versão 14 ou superior)
+- PostgreSQL (versão 12 ou superior)
 
+## 🛠️ Instalação
+
+1. **Clone o repositório:**
 ```bash
-   git clone https://github.com/seu-usuario/seu-projeto.git
-   cd seu-projeto
+git clone https://github.com/seu-usuario/mvc-boilerplate.git
+cd mvc-boilerplate
 ```
 
-2. **Instalar as dependências:**
-    
+2. **Instale as dependências:**
 ```bash
 npm install
 ```
-    
-3. **Configurar o arquivo `.env`:**
-    
-Renomeie o arquivo `.env.example` para `.env` e configure as variáveis de ambiente necessárias, como as configurações do banco de dados PostgreSQL.
-    
 
-Configuração do Banco de Dados
-------------------------------
+3. **Configure as variáveis de ambiente:**
+Crie um arquivo `.env` na raiz do projeto com as configurações do banco:
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mvc_boilerplate
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+PORT=3000
+```
 
-1. **Criar banco de dados:**
-    
-    Crie um banco de dados PostgreSQL com o nome especificado no seu arquivo `.env`.
-    
-2. **Executar o script SQL de inicialização:**
-    
+4. **Configure o banco de dados:**
 ```bash
 npm run init-db
 ```
-    
-Isso criará a tabela `users` no seu banco de dados PostgreSQL com UUID como chave primária e inserirá alguns registros de exemplo.
-    
 
-Funcionalidades
----------------
+## 🎯 Como Usar
 
-* **Padrão MVC:** Estrutura organizada em Model, View e Controller.
-* **PostgreSQL:** Banco de dados relacional utilizado para persistência dos dados.
-* **UUID:** Utilização de UUID como chave primária na tabela `users`.
-* **Scripts com `nodemon`:** Utilização do `nodemon` para reiniciar automaticamente o servidor após alterações no código.
-* **Testes:** Inclui estrutura básica para testes automatizados.
+### Iniciar o servidor
+```bash
+# Desenvolvimento (com auto-reload)
+npm run dev
 
-Scripts Disponíveis
--------------------
+# Produção
+npm start
+```
 
-* `npm start`: Inicia o servidor Node.js.
-* `npm run dev`: Inicia o servidor com `nodemon`, reiniciando automaticamente após alterações no código.
-* `npm run test`: Executa os testes automatizados.
-* `npm run test:coverage`: Executa os testes e gera um relatório de cobertura de código.
+### Executar testes
+```bash
+# Todos os testes (usando mocks - não precisa de banco)
+npm test
 
-Estrutura de Diretórios
------------------------
+# Com cobertura de código
+npm run test:coverage
+```
 
-* **`config/`**: Configurações do banco de dados e outras configurações do projeto.
-* **`controllers/`**: Controladores da aplicação (lógica de negócio).
-* **`models/`**: Modelos da aplicação (definições de dados e interações com o banco de dados).
-* **`routes/`**: Rotas da aplicação.
-* **`tests/`**: Testes automatizados.
-* **`views/`**: Views da aplicação (se aplicável).
+Os testes são executados de forma **independente** e **rápida**, sem necessidade de configuração de banco de dados, tornando o desenvolvimento mais acessível para iniciantes.
 
-Contribuição
-------------
+### 📚 Vantagens dos Testes com Mocks
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir um issue ou enviar um pull request.
+- **Facilidade de Aprendizado**: Ideal para estudantes de primeiro ano
+- **Execução Rápida**: Testes executam em segundos 
+- **Sem Dependências**: Não precisa de Docker, PostgreSQL ou configurações complexas
+- **Foco no Código**: Aprenda lógica de negócio sem se preocupar com infraestrutura
+- **Ambiente Controlado**: Dados previsíveis e cenários de teste claros
 
-Licença
--------
+## 🌐 Endpoints da API
 
-Este projeto está licenciado sob a Licença MIT.
+### Usuários
+- `GET /users` - Lista todos os usuários
+- `GET /users/:id` - Busca usuário por ID
+- `POST /users` - Cria novo usuário
+- `PUT /users/:id` - Atualiza usuário
+- `DELETE /users/:id` - Remove usuário
 
-Este README.md fornece uma visão geral clara do boilerplate, incluindo instruções de instalação, configuração do banco de dados, funcionalidades principais, scripts disponíveis, estrutura de diretórios, como contribuir e informações de licença. Certifique-se de personalizar as seções com detalhes específicos do seu projeto conforme necessário.
+### Interface Web
+- `GET /` - Página inicial com lista de usuários
+- `GET /about` - Página sobre
+
+## 📁 Estrutura do Projeto
+
+```
+mvc-boilerplate/
+├── config/
+│   └── db.js                 # Configurações do banco de dados
+├── controllers/
+│   └── userController.js     # Controlador de usuários
+├── models/
+│   └── userModel.js         # Modelo de dados do usuário
+├── repositories/
+│   └── userRepository.js    # Camada de acesso aos dados
+├── routes/
+│   ├── userRoutes.js        # Rotas da API
+│   └── frontRoutes.js       # Rotas do frontend
+├── services/
+│   └── userService.js       # Lógica de negócio
+├── views/
+│   ├── components/
+│   │   └── header.ejs       # Componente de cabeçalho
+│   ├── css/
+│   │   └── style.css        # Estilos CSS
+│   ├── layout/
+│   │   └── main.ejs         # Layout principal
+│   └── pages/
+│       ├── page1.ejs        # Página de usuários
+│       └── page2.ejs        # Página sobre
+├── tests/
+│   ├── fixtures/            # Dados de teste
+│   ├── helpers/             # Utilitários de teste
+│   └── *.test.js           # Arquivos de teste
+├── scripts/
+│   ├── init.sql            # Script de inicialização do BD
+│   └── runSQLScript.js     # Executor de scripts SQL
+└── server.js               # Servidor principal
+```
+
+## 🧪 Testes
+
+O projeto inclui testes completos usando **mocks** para facilitar o aprendizado:
+
+- **Testes de Unidade**: Controllers, Services, Models, Repositories com mocks
+- **Testes de Rotas**: Endpoints da API usando SuperTest e mocks
+- **Sem Dependências Externas**: Não requer configuração de banco de dados para testes
+- **Cobertura**: Relatório detalhado de cobertura de código
+- **Padrão AAA**: Arrange-Act-Assert para testes claros e organizados
+
+## 🔧 Tecnologias Utilizadas
+
+- **Backend**: Node.js, Express.js
+- **Banco de Dados**: PostgreSQL
+- **Template Engine**: EJS
+- **Validação**: Joi
+- **Testes**: Jest, Supertest
+- **Desenvolvimento**: Nodemon
+- **UUID**: Para chaves primárias
+
+## 📊 Scripts Disponíveis
+
+- `npm start` - Inicia o servidor em produção
+- `npm run dev` - Inicia o servidor em desenvolvimento com auto-reload
+- `npm test` - Executa todos os testes
+- `npm run test:coverage` - Executa testes com relatório de cobertura
+- `npm run init-db` - Inicializa o banco de dados
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Commit suas mudanças (`git commit -am 'Adiciona nova feature'`)
+4. Push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
