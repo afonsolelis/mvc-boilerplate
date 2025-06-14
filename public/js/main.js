@@ -1,5 +1,3 @@
-// Main JavaScript file for MVC Boilerplate application
-
 class UserManager {
   constructor() {
     this.apiBase = '/users';
@@ -7,7 +5,6 @@ class UserManager {
   }
 
   init() {
-    // Initialize the application when DOM is loaded
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.onDOMReady());
     } else {
@@ -16,7 +13,6 @@ class UserManager {
   }
 
   onDOMReady() {
-    // Add fade-in animation to main content
     document.querySelectorAll('.fade-in').forEach(element => {
       element.style.opacity = '0';
       element.style.transform = 'translateY(20px)';
@@ -28,13 +24,11 @@ class UserManager {
       }, 100);
     });
 
-    // Load users if we're on the users page
     const usersTable = document.querySelector('#usersTable');
     if (usersTable) {
       this.loadUsers();
     }
 
-    // Set up refresh button if it exists
     const refreshBtn = document.querySelector('#refreshUsers');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => this.loadUsers());
@@ -46,7 +40,6 @@ class UserManager {
     const loadingRow = this.createLoadingRow();
     
     try {
-      // Show loading state
       tableBody.innerHTML = '';
       tableBody.appendChild(loadingRow);
 
@@ -58,7 +51,6 @@ class UserManager {
 
       const users = await response.json();
       
-      // Clear loading state
       tableBody.innerHTML = '';
 
       if (users && users.length > 0) {
@@ -67,7 +59,6 @@ class UserManager {
           tableBody.appendChild(row);
         });
         
-        // Add fade-in animation to rows
         this.animateTableRows();
       } else {
         const noDataRow = this.createNoDataRow();
@@ -164,7 +155,6 @@ class UserManager {
     });
   }
 
-  // User action methods (placeholders for future implementation)
   async viewUser(userId) {
     try {
       const response = await fetch(`${this.apiBase}/${userId}`);
@@ -178,7 +168,6 @@ class UserManager {
   }
 
   editUser(userId) {
-    // Placeholder for edit functionality
     alert(`Editar usuário: ${userId}\n(Funcionalidade a ser implementada)`);
   }
 
@@ -194,7 +183,7 @@ class UserManager {
 
       if (response.ok) {
         alert('Usuário excluído com sucesso!');
-        this.loadUsers(); // Reload the list
+        this.loadUsers();
       } else {
         throw new Error('Erro ao excluir usuário');
       }
@@ -204,7 +193,6 @@ class UserManager {
     }
   }
 
-  // Utility methods
   truncateId(id) {
     return id.length > 8 ? `${id.substring(0, 8)}...` : id;
   }
@@ -216,9 +204,7 @@ class UserManager {
   }
 }
 
-// Utility functions for global use
 function showToast(message, type = 'info') {
-  // Simple toast notification (can be enhanced with Bootstrap Toast)
   const toast = document.createElement('div');
   toast.className = `alert alert-${type} position-fixed`;
   toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
@@ -229,7 +215,6 @@ function showToast(message, type = 'info') {
   
   document.body.appendChild(toast);
   
-  // Auto remove after 5 seconds
   setTimeout(() => {
     if (toast.parentElement) {
       toast.remove();
@@ -248,5 +233,4 @@ function formatDate(dateString) {
   });
 }
 
-// Initialize the UserManager when the script loads
 const userManager = new UserManager();

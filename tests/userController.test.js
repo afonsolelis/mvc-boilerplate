@@ -274,4 +274,121 @@ describe('UserController', () => {
       expect(res.json).toHaveBeenCalledWith({ error: 'Usuário não encontrado' });
     });
   });
+
+  // Testes para casos de erro não cobertos
+  describe('Error handling', () => {
+    test('deve tratar erro de updateUser quando retorna null', async () => {
+      // Arrange
+      req.params = { id: '1' };
+      req.body = { name: 'Updated User' };
+      mockUserService.updateUser.mockResolvedValue(null);
+
+      // Act
+      await userController.updateUser(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Usuário não encontrado' });
+    });
+
+    test('deve tratar erro de deleteUser quando retorna null', async () => {
+      // Arrange
+      req.params = { id: '1' };
+      mockUserService.deleteUser.mockResolvedValue(null);
+
+      // Act
+      await userController.deleteUser(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Usuário não encontrado' });
+    });
+
+    test('deve tratar erro de validação na _handleError', async () => {
+      // Arrange
+      mockUserService.getAllUsers.mockRejectedValue(new Error('Erro de validação'));
+
+      // Act
+      await userController.getAllUsers(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Erro de validação' });
+    });
+
+    test('deve tratar erro de não encontrado na _handleError', async () => {
+      // Arrange
+      mockUserService.getAllUsers.mockRejectedValue(new Error('Usuário não encontrado'));
+
+      // Act
+      await userController.getAllUsers(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Usuário não encontrado' });
+    });
+
+    test('deve tratar erro de conexão na _handleError', async () => {
+      // Arrange
+      mockUserService.getAllUsers.mockRejectedValue(new Error('Erro de conexão'));
+
+      // Act
+      await userController.getAllUsers(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Serviço temporariamente indisponível' });
+    });
+
+    test('deve tratar erro de timeout na _handleError', async () => {
+      // Arrange
+      mockUserService.getAllUsers.mockRejectedValue(new Error('Connection timeout'));
+
+      // Act
+      await userController.getAllUsers(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Serviço temporariamente indisponível' });
+    });
+
+    test('deve tratar erro de banco na _handleError', async () => {
+      // Arrange
+      mockUserService.getAllUsers.mockRejectedValue(new Error('Erro do banco de dados'));
+
+      // Act
+      await userController.getAllUsers(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Serviço temporariamente indisponível' });
+    });
+
+    test('deve tratar exceção no updateUser', async () => {
+      // Arrange
+      req.params = { id: '1' };
+      req.body = { name: 'Updated User' };
+      mockUserService.updateUser.mockRejectedValue(new Error('Database error'));
+
+      // Act
+      await userController.updateUser(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Erro interno do servidor' });
+    });
+
+    test('deve tratar exceção no deleteUser', async () => {
+      // Arrange
+      req.params = { id: '1' };
+      mockUserService.deleteUser.mockRejectedValue(new Error('Database error'));
+
+      // Act
+      await userController.deleteUser(req, res);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Erro interno do servidor' });
+    });
+  });
 });

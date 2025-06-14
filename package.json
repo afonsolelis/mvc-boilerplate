@@ -8,7 +8,10 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "init-db": "node scripts/runSQLScript.js"
+    "migrate:dev": "node scripts/runMigration.js dev",
+    "migrate:prod": "node scripts/runMigration.js prod",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
@@ -19,7 +22,7 @@
   },
   "devDependencies": {
     "jest": "^27.0.6",
-    "nodemon": "^2.0.22",
+    "nodemon": "^3.1.10",
     "supertest": "^6.1.3"
   }
 }

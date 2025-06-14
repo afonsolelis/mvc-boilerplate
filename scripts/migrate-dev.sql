@@ -1,4 +1,4 @@
--- init.sql
+-- migrate-dev.sql - Development Migration
 
 -- Criar extensão para suportar UUIDs, se ainda não estiver ativada
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -7,10 +7,27 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
-  email VARCHAR(100) UNIQUE NOT NULL
+  email VARCHAR(100) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Inserir 20 usuários com nomes e emails aleatórios
+-- Criar função para atualizar timestamp automaticamente
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Criar trigger para atualizar updated_at automaticamente
+CREATE TRIGGER update_users_updated_at 
+    BEFORE UPDATE ON users 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Inserir dados de teste para desenvolvimento
 INSERT INTO users (name, email)
 VALUES 
   ('Alice Smith', 'alice.smith@example.com'),
@@ -32,4 +49,5 @@ VALUES
   ('Quinn Lopez', 'quinn.lopez@example.com'),
   ('Rose Thompson', 'rose.thompson@example.com'),
   ('Samuel Perez', 'samuel.perez@example.com'),
-  ('Tara Scott', 'tara.scott@example.com');
+  ('Tara Scott', 'tara.scott@example.com')
+ON CONFLICT (email) DO NOTHING;

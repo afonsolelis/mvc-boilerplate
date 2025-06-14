@@ -158,5 +158,377 @@ describe('UserRepository', () => {
       // Assert
       expect(user).toBeNull();
     });
+
+    test('deve lançar erro quando email não fornecido', async () => {
+      // Act & Assert
+      await expect(userRepository.findByEmail()).rejects.toThrow('Email é obrigatório para busca');
+      await expect(userRepository.findByEmail('')).rejects.toThrow('Email é obrigatório para busca');
+    });
+
+    test('deve lançar erro quando db não disponível', async () => {
+      // Arrange
+      userRepository.db = null;
+
+      // Act & Assert
+      await expect(userRepository.findByEmail('test@example.com')).rejects.toThrow('Conexão com banco de dados não disponível');
+    });
+
+    test('deve tratar erro de conexão', async () => {
+      // Arrange
+      const connectionError = new Error('Connection failed');
+      connectionError.code = 'ECONNREFUSED';
+      mockDb.query.mockRejectedValue(connectionError);
+
+      // Act & Assert
+      await expect(userRepository.findByEmail('test@example.com')).rejects.toThrow('Erro de conexão com o banco de dados');
+    });
+
+    test('deve tratar erro genérico', async () => {
+      // Arrange
+      mockDb.query.mockRejectedValue(new Error('Database error'));
+
+      // Act & Assert
+      await expect(userRepository.findByEmail('test@example.com')).rejects.toThrow('Erro ao buscar usuário por email');
+    });
+  });
+
+  // Testes para casos de erro não cobertos
+  describe('Error handling', () => {
+    describe('findAll error cases', () => {
+      test('deve lançar erro quando db não disponível', async () => {
+        // Arrange
+        userRepository.db = null;
+
+        // Act & Assert
+        await expect(userRepository.findAll()).rejects.toThrow('Conexão com banco de dados não disponível');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        const connectionError = new Error('Connection failed');
+        connectionError.code = 'ECONNREFUSED';
+        mockDb.query.mockRejectedValue(connectionError);
+
+        // Act & Assert
+        await expect(userRepository.findAll()).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro de tabela não encontrada', async () => {
+        // Arrange
+        const tableError = new Error('Table not found');
+        tableError.code = '42P01';
+        mockDb.query.mockRejectedValue(tableError);
+
+        // Act & Assert
+        await expect(userRepository.findAll()).rejects.toThrow('Tabela de usuários não encontrada');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockDb.query.mockRejectedValue(new Error('Database error'));
+
+        // Act & Assert
+        await expect(userRepository.findAll()).rejects.toThrow('Erro ao buscar usuários');
+      });
+
+      test('deve retornar array vazio quando result.rows é undefined', async () => {
+        // Arrange
+        mockDb.query.mockResolvedValue({});
+
+        // Act
+        const users = await userRepository.findAll();
+
+        // Assert
+        expect(users).toEqual([]);
+      });
+    });
+
+    describe('findById error cases', () => {
+      test('deve lançar erro quando db não disponível', async () => {
+        // Arrange
+        userRepository.db = null;
+
+        // Act & Assert
+        await expect(userRepository.findById(1)).rejects.toThrow('Conexão com banco de dados não disponível');
+      });
+
+      test('deve lançar erro quando ID não fornecido', async () => {
+        // Act & Assert
+        await expect(userRepository.findById()).rejects.toThrow('ID é obrigatório para busca');
+        await expect(userRepository.findById('')).rejects.toThrow('ID é obrigatório para busca');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        const connectionError = new Error('Connection failed');
+        connectionError.code = 'ECONNREFUSED';
+        mockDb.query.mockRejectedValue(connectionError);
+
+        // Act & Assert
+        await expect(userRepository.findById(1)).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro de ID inválido', async () => {
+        // Arrange
+        const typeError = new Error('Invalid type');
+        typeError.code = '22P02';
+        mockDb.query.mockRejectedValue(typeError);
+
+        // Act & Assert
+        await expect(userRepository.findById('invalid')).rejects.toThrow('ID deve ser um número válido');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockDb.query.mockRejectedValue(new Error('Database error'));
+
+        // Act & Assert
+        await expect(userRepository.findById(1)).rejects.toThrow('Erro ao buscar usuário');
+      });
+    });
+
+    describe('create error cases', () => {
+      test('deve lançar erro quando db não disponível', async () => {
+        // Arrange
+        userRepository.db = null;
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Conexão com banco de dados não disponível');
+      });
+
+      test('deve lançar erro quando userData não fornecido', async () => {
+        // Act & Assert
+        await expect(userRepository.create()).rejects.toThrow('Nome e email são obrigatórios');
+        await expect(userRepository.create({})).rejects.toThrow('Nome e email são obrigatórios');
+        await expect(userRepository.create({ name: 'Test' })).rejects.toThrow('Nome e email são obrigatórios');
+        await expect(userRepository.create({ email: 'test@example.com' })).rejects.toThrow('Nome e email são obrigatórios');
+      });
+
+      test('deve tratar erro quando result não tem rows', async () => {
+        // Arrange
+        mockDb.query.mockResolvedValue({ rows: [] });
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Falha ao criar usuário no banco de dados');
+      });
+
+      test('deve tratar erro quando result.rows é undefined', async () => {
+        // Arrange
+        mockDb.query.mockResolvedValue({});
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Falha ao criar usuário no banco de dados');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        const connectionError = new Error('Connection failed');
+        connectionError.code = 'ECONNREFUSED';
+        mockDb.query.mockRejectedValue(connectionError);
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro de email duplicado', async () => {
+        // Arrange
+        const duplicateError = new Error('Duplicate key');
+        duplicateError.code = '23505';
+        mockDb.query.mockRejectedValue(duplicateError);
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Email já está em uso');
+      });
+
+      test('deve tratar erro de dados obrigatórios', async () => {
+        // Arrange
+        const notNullError = new Error('Not null violation');
+        notNullError.code = '23502';
+        mockDb.query.mockRejectedValue(notNullError);
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Dados obrigatórios não fornecidos');
+      });
+
+      test('deve propagar erro de validação', async () => {
+        // Arrange
+        const validationError = new Error('Campo obrigatório não fornecido');
+        mockDb.query.mockRejectedValue(validationError);
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Campo obrigatório não fornecido');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockDb.query.mockRejectedValue(new Error('Database error'));
+
+        // Act & Assert
+        await expect(userRepository.create({ name: 'Test', email: 'test@example.com' })).rejects.toThrow('Erro ao criar usuário');
+      });
+    });
+
+    describe('update error cases', () => {
+      test('deve lançar erro quando db não disponível', async () => {
+        // Arrange
+        userRepository.db = null;
+
+        // Act & Assert
+        await expect(userRepository.update(1, { name: 'Test' })).rejects.toThrow('Conexão com banco de dados não disponível');
+      });
+
+      test('deve lançar erro quando ID não fornecido', async () => {
+        // Act & Assert
+        await expect(userRepository.update(null, { name: 'Test' })).rejects.toThrow('ID é obrigatório para atualização');
+        await expect(userRepository.update('', { name: 'Test' })).rejects.toThrow('ID é obrigatório para atualização');
+      });
+
+      test('deve lançar erro quando userData inválido', async () => {
+        // Act & Assert
+        await expect(userRepository.update(1, null)).rejects.toThrow('Dados para atualização são obrigatórios');
+        await expect(userRepository.update(1, 'string')).rejects.toThrow('Dados para atualização são obrigatórios');
+      });
+
+      test('deve lançar erro quando nenhum campo para atualizar', async () => {
+        // Act & Assert
+        await expect(userRepository.update(1, {})).rejects.toThrow('Nenhum campo para atualizar');
+        await expect(userRepository.update(1, { other: 'field' })).rejects.toThrow('Nenhum campo para atualizar');
+      });
+
+      test('deve atualizar apenas nome', async () => {
+        // Arrange
+        const mockUpdatedUser = { id: 1, name: 'Updated Name', email: 'old@example.com' };
+        mockDb.query.mockResolvedValue({ rows: [mockUpdatedUser] });
+
+        // Act
+        const result = await userRepository.update(1, { name: 'Updated Name' });
+
+        // Assert
+        expect(mockDb.query).toHaveBeenCalledWith('UPDATE users SET name = $1 WHERE id = $2 RETURNING *', ['Updated Name', 1]);
+        expect(result).toEqual(mockUpdatedUser);
+      });
+
+      test('deve atualizar apenas email', async () => {
+        // Arrange
+        const mockUpdatedUser = { id: 1, name: 'Old Name', email: 'new@example.com' };
+        mockDb.query.mockResolvedValue({ rows: [mockUpdatedUser] });
+
+        // Act
+        const result = await userRepository.update(1, { email: 'new@example.com' });
+
+        // Assert
+        expect(mockDb.query).toHaveBeenCalledWith('UPDATE users SET email = $1 WHERE id = $2 RETURNING *', ['new@example.com', 1]);
+        expect(result).toEqual(mockUpdatedUser);
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        const connectionError = new Error('Connection failed');
+        connectionError.code = 'ECONNREFUSED';
+        mockDb.query.mockRejectedValue(connectionError);
+
+        // Act & Assert
+        await expect(userRepository.update(1, { name: 'Test' })).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro de email duplicado', async () => {
+        // Arrange
+        const duplicateError = new Error('Duplicate key');
+        duplicateError.code = '23505';
+        mockDb.query.mockRejectedValue(duplicateError);
+
+        // Act & Assert
+        await expect(userRepository.update(1, { name: 'Test' })).rejects.toThrow('Email já está em uso');
+      });
+
+      test('deve tratar erro de ID inválido', async () => {
+        // Arrange
+        const typeError = new Error('Invalid type');
+        typeError.code = '22P02';
+        mockDb.query.mockRejectedValue(typeError);
+
+        // Act & Assert
+        await expect(userRepository.update('invalid', { name: 'Test' })).rejects.toThrow('ID deve ser um número válido');
+      });
+
+      test('deve propagar erro de validação', async () => {
+        // Arrange
+        const validationError = new Error('Campo obrigatório não fornecido');
+        mockDb.query.mockRejectedValue(validationError);
+
+        // Act & Assert
+        await expect(userRepository.update(1, { name: 'Test' })).rejects.toThrow('Campo obrigatório não fornecido');
+      });
+
+      test('deve propagar erro de campo vazio', async () => {
+        // Arrange
+        const fieldError = new Error('Nenhum campo válido');
+        mockDb.query.mockRejectedValue(fieldError);
+
+        // Act & Assert
+        await expect(userRepository.update(1, { name: 'Test' })).rejects.toThrow('Nenhum campo válido');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockDb.query.mockRejectedValue(new Error('Database error'));
+
+        // Act & Assert
+        await expect(userRepository.update(1, { name: 'Test' })).rejects.toThrow('Erro ao atualizar usuário');
+      });
+    });
+
+    describe('delete error cases', () => {
+      test('deve lançar erro quando db não disponível', async () => {
+        // Arrange
+        userRepository.db = null;
+
+        // Act & Assert
+        await expect(userRepository.delete(1)).rejects.toThrow('Conexão com banco de dados não disponível');
+      });
+
+      test('deve lançar erro quando ID não fornecido', async () => {
+        // Act & Assert
+        await expect(userRepository.delete()).rejects.toThrow('ID é obrigatório para exclusão');
+        await expect(userRepository.delete('')).rejects.toThrow('ID é obrigatório para exclusão');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        const connectionError = new Error('Connection failed');
+        connectionError.code = 'ECONNREFUSED';
+        mockDb.query.mockRejectedValue(connectionError);
+
+        // Act & Assert
+        await expect(userRepository.delete(1)).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro de ID inválido', async () => {
+        // Arrange
+        const typeError = new Error('Invalid type');
+        typeError.code = '22P02';
+        mockDb.query.mockRejectedValue(typeError);
+
+        // Act & Assert
+        await expect(userRepository.delete('invalid')).rejects.toThrow('ID deve ser um número válido');
+      });
+
+      test('deve propagar erro de validação', async () => {
+        // Arrange
+        const validationError = new Error('Campo obrigatório não fornecido');
+        mockDb.query.mockRejectedValue(validationError);
+
+        // Act & Assert
+        await expect(userRepository.delete(1)).rejects.toThrow('Campo obrigatório não fornecido');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockDb.query.mockRejectedValue(new Error('Database error'));
+
+        // Act & Assert
+        await expect(userRepository.delete(1)).rejects.toThrow('Erro ao deletar usuário');
+      });
+    });
   });
 });

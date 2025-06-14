@@ -15,7 +15,8 @@ Uma aplicação completa seguindo o padrão MVC (Model-View-Controller) com Node
 ## 📋 Requisitos
 
 - Node.js (versão 14 ou superior)
-- PostgreSQL (versão 12 ou superior)
+- Docker e Docker Compose (recomendado)
+- **OU** PostgreSQL (versão 12 ou superior) instalado localmente
 
 ## 🛠️ Instalação
 
@@ -31,20 +32,33 @@ npm install
 ```
 
 3. **Configure as variáveis de ambiente:**
-Crie um arquivo `.env` na raiz do projeto com as configurações do banco:
+O projeto já inclui um arquivo `.env` configurado para Docker. Se precisar modificar:
 ```env
+# PostgreSQL Database Configuration
+DB_NAME=mvc_database
+DB_DATABASE=mvc_database
+DB_USER=mvc_user
+DB_PASSWORD=mvc_password
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=mvc_boilerplate
-DB_USER=seu_usuario
-DB_PASSWORD=sua_senha
-PORT=3000
+
+# Adminer runs without additional configuration
 ```
 
-4. **Configure o banco de dados:**
+4. **Inicie o banco de dados com Docker:**
 ```bash
-npm run init-db
+# Sobe PostgreSQL e Adminer
+npm run docker:up
+
+# Executa a migração (desenvolvimento com dados de teste)
+npm run migrate:dev
+
+# OU para produção (sem dados de teste)
+npm run migrate:prod
 ```
+
+**Alternativa sem Docker:**
+Se preferir usar PostgreSQL local, ajuste as variáveis no `.env` e execute a migração.
 
 ## 🎯 Como Usar
 
@@ -89,6 +103,14 @@ Os testes são executados de forma **independente** e **rápida**, sem necessida
 - `GET /` - Página inicial com lista de usuários
 - `GET /about` - Página sobre
 
+### Adminer (Interface do Banco)
+- `http://localhost:8080` - Interface web para gerenciar PostgreSQL
+  - **Sistema**: PostgreSQL
+  - **Servidor**: postgres
+  - **Usuário**: mvc_user
+  - **Senha**: mvc_password
+  - **Base de dados**: mvc_database
+
 ## 📁 Estrutura do Projeto
 
 ```
@@ -121,8 +143,9 @@ mvc-boilerplate/
 │   ├── helpers/             # Utilitários de teste
 │   └── *.test.js           # Arquivos de teste
 ├── scripts/
-│   ├── init.sql            # Script de inicialização do BD
-│   └── runSQLScript.js     # Executor de scripts SQL
+│   ├── migrate-dev.sql     # Migração para desenvolvimento
+│   ├── migrate-prod.sql    # Migração para produção
+│   └── runMigration.js     # Executor de migrações
 └── server.js               # Servidor principal
 ```
 
@@ -140,6 +163,8 @@ O projeto inclui testes completos usando **mocks** para facilitar o aprendizado:
 
 - **Backend**: Node.js, Express.js
 - **Banco de Dados**: PostgreSQL
+- **Containerização**: Docker, Docker Compose
+- **Interface DB**: Adminer
 - **Template Engine**: EJS
 - **Validação**: Joi
 - **Testes**: Jest, Supertest
@@ -148,11 +173,19 @@ O projeto inclui testes completos usando **mocks** para facilitar o aprendizado:
 
 ## 📊 Scripts Disponíveis
 
+### Aplicação
 - `npm start` - Inicia o servidor em produção
 - `npm run dev` - Inicia o servidor em desenvolvimento com auto-reload
+
+### Testes
 - `npm test` - Executa todos os testes
 - `npm run test:coverage` - Executa testes com relatório de cobertura
-- `npm run init-db` - Inicializa o banco de dados
+
+### Docker & Banco de Dados
+- `npm run docker:up` - Sobe PostgreSQL e Adminer
+- `npm run docker:down` - Para os containers
+- `npm run migrate:dev` - Executa migração de desenvolvimento (com dados de teste)
+- `npm run migrate:prod` - Executa migração de produção (sem dados de teste)
 
 ## 🤝 Contribuição
 

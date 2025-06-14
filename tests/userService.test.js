@@ -212,4 +212,180 @@ describe('UserService', () => {
       expect(mockUserRepository.delete).not.toHaveBeenCalled();
     });
   });
+
+  // Testes para casos de erro não cobertos
+  describe('Constructor', () => {
+    test('deve lançar erro quando userRepository não fornecido', () => {
+      // Act & Assert
+      expect(() => new UserService()).toThrow('UserRepository é obrigatório');
+      expect(() => new UserService(null)).toThrow('UserRepository é obrigatório');
+    });
+  });
+
+  describe('Error handling', () => {
+    describe('getAllUsers error cases', () => {
+      test('deve retornar array vazio quando users é null', async () => {
+        // Arrange
+        mockUserRepository.findAll.mockResolvedValue(null);
+
+        // Act
+        const users = await userService.getAllUsers();
+
+        // Assert
+        expect(users).toEqual([]);
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        mockUserRepository.findAll.mockRejectedValue(new Error('Erro de conexão com o banco'));
+
+        // Act & Assert
+        await expect(userService.getAllUsers()).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockUserRepository.findAll.mockRejectedValue(new Error('Erro genérico'));
+
+        // Act & Assert
+        await expect(userService.getAllUsers()).rejects.toThrow('Erro no serviço ao obter usuários');
+      });
+    });
+
+    describe('getUserById error cases', () => {
+      test('deve lançar erro quando ID não fornecido', async () => {
+        // Act & Assert
+        await expect(userService.getUserById()).rejects.toThrow('ID é obrigatório');
+        await expect(userService.getUserById('')).rejects.toThrow('ID é obrigatório');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        mockUserRepository.findById.mockRejectedValue(new Error('Erro de conexão com banco'));
+
+        // Act & Assert
+        await expect(userService.getUserById('1')).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockUserRepository.findById.mockRejectedValue(new Error('Erro genérico'));
+
+        // Act & Assert
+        await expect(userService.getUserById('1')).rejects.toThrow('Erro no serviço ao obter usuário');
+      });
+    });
+
+    describe('createUser error cases', () => {
+      test('deve lançar erro quando userData não fornecido', async () => {
+        // Act & Assert
+        await expect(userService.createUser()).rejects.toThrow('Dados do usuário são obrigatórios');
+        await expect(userService.createUser(null)).rejects.toThrow('Dados do usuário são obrigatórios');
+        await expect(userService.createUser('string')).rejects.toThrow('Dados do usuário são obrigatórios');
+      });
+
+      test('deve tratar erro quando newUser é null', async () => {
+        // Arrange
+        const newUserData = userFixtures.newUser;
+        mockUserRepository.findByEmail.mockResolvedValue(null);
+        mockUserRepository.create.mockResolvedValue(null);
+
+        // Act & Assert
+        await expect(userService.createUser(newUserData)).rejects.toThrow('Falha ao criar usuário');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        const newUserData = userFixtures.newUser;
+        mockUserRepository.findByEmail.mockRejectedValue(new Error('Erro de conexão com banco'));
+
+        // Act & Assert
+        await expect(userService.createUser(newUserData)).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        const newUserData = userFixtures.newUser;
+        mockUserRepository.findByEmail.mockRejectedValue(new Error('Erro genérico'));
+
+        // Act & Assert
+        await expect(userService.createUser(newUserData)).rejects.toThrow('Erro no serviço ao criar usuário');
+      });
+    });
+
+    describe('updateUser error cases', () => {
+      test('deve lançar erro quando ID não fornecido', async () => {
+        // Act & Assert
+        await expect(userService.updateUser()).rejects.toThrow('ID é obrigatório');
+        await expect(userService.updateUser('')).rejects.toThrow('ID é obrigatório');
+      });
+
+      test('deve lançar erro quando userData inválido', async () => {
+        // Act & Assert
+        await expect(userService.updateUser('1', null)).rejects.toThrow('Dados para atualização são obrigatórios');
+        await expect(userService.updateUser('1', 'string')).rejects.toThrow('Dados para atualização são obrigatórios');
+        await expect(userService.updateUser('1', {})).rejects.toThrow('Dados para atualização são obrigatórios');
+      });
+
+      test('deve tratar erro quando updatedUser é null', async () => {
+        // Arrange
+        const existingUser = { id: 1, name: 'User', email: 'user@example.com' };
+        mockUserRepository.findById.mockResolvedValue(existingUser);
+        mockUserRepository.update.mockResolvedValue(null);
+
+        // Act & Assert
+        await expect(userService.updateUser('1', { name: 'Updated' })).rejects.toThrow('Falha ao atualizar usuário');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        mockUserRepository.findById.mockRejectedValue(new Error('Erro de conexão com banco'));
+
+        // Act & Assert
+        await expect(userService.updateUser('1', { name: 'Test' })).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockUserRepository.findById.mockRejectedValue(new Error('Erro genérico'));
+
+        // Act & Assert
+        await expect(userService.updateUser('1', { name: 'Test' })).rejects.toThrow('Erro no serviço ao atualizar usuário');
+      });
+    });
+
+    describe('deleteUser error cases', () => {
+      test('deve lançar erro quando ID não fornecido', async () => {
+        // Act & Assert
+        await expect(userService.deleteUser()).rejects.toThrow('ID é obrigatório');
+        await expect(userService.deleteUser('')).rejects.toThrow('ID é obrigatório');
+      });
+
+      test('deve tratar erro quando deletedUser é null', async () => {
+        // Arrange
+        const existingUser = { id: 1, name: 'User', email: 'user@example.com' };
+        mockUserRepository.findById.mockResolvedValue(existingUser);
+        mockUserRepository.delete.mockResolvedValue(null);
+
+        // Act & Assert
+        await expect(userService.deleteUser('1')).rejects.toThrow('Falha ao deletar usuário');
+      });
+
+      test('deve tratar erro de conexão', async () => {
+        // Arrange
+        mockUserRepository.findById.mockRejectedValue(new Error('Erro de conexão com banco'));
+
+        // Act & Assert
+        await expect(userService.deleteUser('1')).rejects.toThrow('Erro de conexão com o banco de dados');
+      });
+
+      test('deve tratar erro genérico', async () => {
+        // Arrange
+        mockUserRepository.findById.mockRejectedValue(new Error('Erro genérico'));
+
+        // Act & Assert
+        await expect(userService.deleteUser('1')).rejects.toThrow('Erro no serviço ao deletar usuário');
+      });
+    });
+  });
 });
