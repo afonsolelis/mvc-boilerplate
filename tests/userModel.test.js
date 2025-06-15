@@ -1,4 +1,5 @@
 const UserModel = require('../models/userModel');
+const userFixtures = require('./fixtures/userFixtures');
 
 describe('UserModel', () => {
   test('deve validar dados de usuário para criação', () => {
@@ -18,12 +19,15 @@ describe('UserModel', () => {
     expect(result).toEqual(validData);
   });
 
-  test('deve validar ID', () => {
-    expect(UserModel.validateId('1')).toBe(1);
-    expect(UserModel.validateId(5)).toBe(5);
+  test('deve validar ID UUID', () => {
+    const validUUID = userFixtures.validUUIDs.valid;
+    expect(UserModel.validateId(validUUID)).toBe(validUUID);
+    
     expect(() => UserModel.validateId('invalid')).toThrow('ID inválido');
-    expect(() => UserModel.validateId(0)).toThrow('ID inválido');
-    expect(() => UserModel.validateId(-1)).toThrow('ID inválido');
+    expect(() => UserModel.validateId('123')).toThrow('ID inválido');
+    expect(() => UserModel.validateId('')).toThrow('ID é obrigatório');
+    expect(() => UserModel.validateId(null)).toThrow('ID é obrigatório');
+    expect(() => UserModel.validateId(undefined)).toThrow('ID é obrigatório');
   });
 
   test('deve validar email', () => {

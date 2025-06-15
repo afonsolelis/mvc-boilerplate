@@ -3,16 +3,22 @@
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
       <div>
-        <h1 class="text-gradient">
+        <h1 class="text-primary">
           <i class="fas fa-users me-2"></i>
           Gerenciamento de Usuários
         </h1>
         <p class="text-muted mb-0">Visualize e gerencie os usuários cadastrados no sistema</p>
       </div>
-      <button id="refreshUsers" class="btn btn-primary">
-        <i class="fas fa-sync-alt me-2"></i>
-        Atualizar
-      </button>
+      <div>
+        <button id="createUser" class="btn btn-primary me-2">
+          <i class="fas fa-plus me-2"></i>
+          Novo Usuário
+        </button>
+        <button id="refreshUsers" class="btn btn-outline-primary">
+          <i class="fas fa-sync-alt me-2"></i>
+          Atualizar
+        </button>
+      </div>
     </div>
 
     <!-- Statistics Cards -->
@@ -56,7 +62,7 @@
     </div>
 
     <!-- Users Table -->
-    <div class="card shadow-custom fade-in">
+    <div class="card fade-in">
       <div class="card-header">
         <h4 class="card-title">
           <i class="fas fa-table me-2"></i>
@@ -124,6 +130,173 @@ fetch('/users')
   .then(users => console.log(users));</code></pre>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Criação de Usuário -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createUserModalLabel">
+              <i class="fas fa-user-plus me-2"></i>
+              Criar Novo Usuário
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="createUserForm">
+              <div class="mb-3">
+                <label for="userName" class="form-label">
+                  <i class="fas fa-user me-1"></i>
+                  Nome *
+                </label>
+                <input type="text" class="form-control" id="userName" required minlength="2" maxlength="100">
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="userEmail" class="form-label">
+                  <i class="fas fa-envelope me-1"></i>
+                  Email *
+                </label>
+                <input type="email" class="form-control" id="userEmail" required>
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="text-muted small">
+                <i class="fas fa-info-circle me-1"></i>
+                Os campos marcados com * são obrigatórios
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-1"></i>
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" id="saveUser">
+              <i class="fas fa-save me-1"></i>
+              Salvar Usuário
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Visualização de Usuário -->
+    <div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="viewUserModalLabel">
+              <i class="fas fa-user me-2"></i>
+              Visualizar Usuário
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label text-muted small">
+                    <i class="fas fa-fingerprint me-1"></i>
+                    ID
+                  </label>
+                  <div class="form-control-plaintext fw-bold" id="viewUserId">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label text-muted small">
+                    <i class="fas fa-calendar me-1"></i>
+                    Criado em
+                  </label>
+                  <div class="form-control-plaintext" id="viewUserCreated">-</div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small">
+                <i class="fas fa-user me-1"></i>
+                Nome
+              </label>
+              <div class="form-control-plaintext fw-bold" id="viewUserName">-</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small">
+                <i class="fas fa-envelope me-1"></i>
+                Email
+              </label>
+              <div class="form-control-plaintext" id="viewUserEmail">-</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small">
+                <i class="fas fa-clock me-1"></i>
+                Última atualização
+              </label>
+              <div class="form-control-plaintext" id="viewUserUpdated">-</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-1"></i>
+              Fechar
+            </button>
+            <button type="button" class="btn btn-primary" id="editFromView">
+              <i class="fas fa-edit me-1"></i>
+              Editar Usuário
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Edição de Usuário -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editUserModalLabel">
+              <i class="fas fa-user-edit me-2"></i>
+              Editar Usuário
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editUserForm">
+              <input type="hidden" id="editUserId">
+              <div class="mb-3">
+                <label for="editUserName" class="form-label">
+                  <i class="fas fa-user me-1"></i>
+                  Nome *
+                </label>
+                <input type="text" class="form-control" id="editUserName" required minlength="2" maxlength="100">
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="editUserEmail" class="form-label">
+                  <i class="fas fa-envelope me-1"></i>
+                  Email *
+                </label>
+                <input type="email" class="form-control" id="editUserEmail" required>
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="text-muted small">
+                <i class="fas fa-info-circle me-1"></i>
+                Os campos marcados com * são obrigatórios
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-1"></i>
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" id="updateUser">
+              <i class="fas fa-save me-1"></i>
+              Salvar Alterações
+            </button>
           </div>
         </div>
       </div>

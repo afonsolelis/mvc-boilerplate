@@ -33,6 +33,26 @@ class UserManager {
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => this.loadUsers());
     }
+
+    const createBtn = document.querySelector('#createUser');
+    if (createBtn) {
+      createBtn.addEventListener('click', () => this.showCreateModal());
+    }
+
+    const saveBtn = document.querySelector('#saveUser');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => this.createUser());
+    }
+
+    const editFromViewBtn = document.querySelector('#editFromView');
+    if (editFromViewBtn) {
+      editFromViewBtn.addEventListener('click', () => this.editFromView());
+    }
+
+    const updateBtn = document.querySelector('#updateUser');
+    if (updateBtn) {
+      updateBtn.addEventListener('click', () => this.updateUser());
+    }
   }
 
   async loadUsers() {
@@ -158,17 +178,320 @@ class UserManager {
   async viewUser(userId) {
     try {
       const response = await fetch(`${this.apiBase}/${userId}`);
-      const user = await response.json();
       
-      alert(`Usuário: ${user.name}\nEmail: ${user.email}\nID: ${user.id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const user = await response.json();
+      this.showViewModal(user);
     } catch (error) {
       console.error('Error viewing user:', error);
-      alert('Erro ao visualizar usuário');
+      showToast('Erro ao carregar dados do usuário', 'danger');
     }
   }
 
-  editUser(userId) {
-    alert(`Editar usuário: ${userId}\n(Funcionalidade a ser implementada)`);
+  showViewModal(user) {
+    // Populate view modal fields
+    document.getElementById('viewUserId').textContent = this.truncateId(user.id);
+    document.getElementById('viewUserName').textContent = user.name;
+    document.getElementById('viewUserEmail').textContent = user.email;
+    document.getElementById('viewUserCreated').textContent = formatDate(user.created_at);
+    document.getElementById('viewUserUpdated').textContent = formatDate(user.updated_at);
+    
+    // Store user data for editing
+    this.currentUser = user;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('viewUserModal'));
+    modal.show();
+  }
+
+  editFromView() {
+    if (!this.currentUser) {
+      showToast('Erro: dados do usuário não encontrados', 'danger');
+      return;
+    }
+    
+    // Hide view modal
+    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewUserModal'));
+    viewModal.hide();
+    
+    // Show edit modal with current user data
+    setTimeout(() => {
+      this.showEditModal(this.currentUser);
+    }, 300); // Wait for view modal to close
+  }
+
+  showEditModal(user = null) {
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    this.clearEditForm();
+    
+    if (user) {
+      // Populate form with existing user data
+      document.getElementById('editUserId').value = user.id;
+      document.getElementById('editUserName').value = user.name;
+      document.getElementById('editUserEmail').value = user.email;
+      this.currentUser = user;
+    }
+    
+    modal.show();
+  }
+
+  clearEditForm() {
+    const form = document.getElementById('editUserForm');
+    form.reset();
+    form.classList.remove('was-validated');
+    
+    // Clear custom validation messages
+    const inputs = form.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+      input.classList.remove('is-invalid', 'is-valid');
+      const feedback = input.nextElementSibling;
+      if (feedback && feedback.classList.contains('invalid-feedback')) {
+        feedback.textContent = '';
+      }
+    });
+  }
+
+  validateEditForm() {
+    const nameInput = document.getElementById('editUserName');
+    const emailInput = document.getElementById('editUserEmail');
+    let isValid = true;
+
+    // Validate name
+    if (!nameInput.value.trim()) {
+      this.showFieldError(nameInput, 'Nome é obrigatório');
+      isValid = false;
+    } else if (nameInput.value.trim().length < 2) {
+      this.showFieldError(nameInput, 'Nome deve ter pelo menos 2 caracteres');
+      isValid = false;
+    } else if (nameInput.value.trim().length > 100) {
+      this.showFieldError(nameInput, 'Nome deve ter no máximo 100 caracteres');
+      isValid = false;
+    } else {
+      this.showFieldSuccess(nameInput);
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailInput.value.trim()) {
+      this.showFieldError(emailInput, 'Email é obrigatório');
+      isValid = false;
+    } else if (!emailRegex.test(emailInput.value.trim())) {
+      this.showFieldError(emailInput, 'Email deve ter um formato válido');
+      isValid = false;
+    } else {
+      this.showFieldSuccess(emailInput);
+    }
+
+    return isValid;
+  }
+
+  async updateUser() {
+    if (!this.validateEditForm()) {
+      return;
+    }
+
+    if (!this.currentUser) {
+      showToast('Erro: usuário não encontrado', 'danger');
+      return;
+    }
+
+    const updateBtn = document.getElementById('updateUser');
+    const originalText = updateBtn.innerHTML;
+    
+    try {
+      // Show loading state
+      updateBtn.disabled = true;
+      updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Salvando...';
+
+      const name = document.getElementById('editUserName').value.trim();
+      const email = document.getElementById('editUserEmail').value.trim();
+      const userId = this.currentUser.id;
+
+      const response = await fetch(`${this.apiBase}/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Success
+        showToast('Usuário atualizado com sucesso!', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+        modal.hide();
+        this.loadUsers(); // Refresh the table
+        this.currentUser = null; // Clear current user
+      } else {
+        // Handle server errors
+        if (result.error) {
+          if (result.error.includes('já existe') || result.error.includes('já está em uso')) {
+            this.showFieldError(document.getElementById('editUserEmail'), 'Este email já está em uso por outro usuário');
+          } else {
+            showToast(`Erro: ${result.error}`, 'danger');
+          }
+        } else {
+          showToast('Erro ao atualizar usuário', 'danger');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      showToast('Erro de conexão. Tente novamente.', 'danger');
+    } finally {
+      // Restore button state
+      updateBtn.disabled = false;
+      updateBtn.innerHTML = originalText;
+    }
+  }
+
+  showCreateModal() {
+    const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+    this.clearForm();
+    modal.show();
+  }
+
+  clearForm() {
+    const form = document.getElementById('createUserForm');
+    form.reset();
+    form.classList.remove('was-validated');
+    
+    // Clear custom validation messages
+    const inputs = form.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+      input.classList.remove('is-invalid', 'is-valid');
+      const feedback = input.nextElementSibling;
+      if (feedback && feedback.classList.contains('invalid-feedback')) {
+        feedback.textContent = '';
+      }
+    });
+  }
+
+  validateForm() {
+    const form = document.getElementById('createUserForm');
+    const nameInput = document.getElementById('userName');
+    const emailInput = document.getElementById('userEmail');
+    let isValid = true;
+
+    // Validate name
+    if (!nameInput.value.trim()) {
+      this.showFieldError(nameInput, 'Nome é obrigatório');
+      isValid = false;
+    } else if (nameInput.value.trim().length < 2) {
+      this.showFieldError(nameInput, 'Nome deve ter pelo menos 2 caracteres');
+      isValid = false;
+    } else if (nameInput.value.trim().length > 100) {
+      this.showFieldError(nameInput, 'Nome deve ter no máximo 100 caracteres');
+      isValid = false;
+    } else {
+      this.showFieldSuccess(nameInput);
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailInput.value.trim()) {
+      this.showFieldError(emailInput, 'Email é obrigatório');
+      isValid = false;
+    } else if (!emailRegex.test(emailInput.value.trim())) {
+      this.showFieldError(emailInput, 'Email deve ter um formato válido');
+      isValid = false;
+    } else {
+      this.showFieldSuccess(emailInput);
+    }
+
+    return isValid;
+  }
+
+  showFieldError(field, message) {
+    field.classList.remove('is-valid');
+    field.classList.add('is-invalid');
+    const feedback = field.nextElementSibling;
+    if (feedback && feedback.classList.contains('invalid-feedback')) {
+      feedback.textContent = message;
+    }
+  }
+
+  showFieldSuccess(field) {
+    field.classList.remove('is-invalid');
+    field.classList.add('is-valid');
+    const feedback = field.nextElementSibling;
+    if (feedback && feedback.classList.contains('invalid-feedback')) {
+      feedback.textContent = '';
+    }
+  }
+
+  async createUser() {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const saveBtn = document.getElementById('saveUser');
+    const originalText = saveBtn.innerHTML;
+    
+    try {
+      // Show loading state
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Salvando...';
+
+      const name = document.getElementById('userName').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+
+      const response = await fetch(this.apiBase, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Success
+        showToast('Usuário criado com sucesso!', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+        modal.hide();
+        this.loadUsers(); // Refresh the table
+      } else {
+        // Handle server errors
+        if (result.error) {
+          if (result.error.includes('já existe') || result.error.includes('já está em uso')) {
+            this.showFieldError(document.getElementById('userEmail'), 'Este email já está em uso');
+          } else {
+            showToast(`Erro: ${result.error}`, 'danger');
+          }
+        } else {
+          showToast('Erro ao criar usuário', 'danger');
+        }
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      showToast('Erro de conexão. Tente novamente.', 'danger');
+    } finally {
+      // Restore button state
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
+  }
+
+  async editUser(userId) {
+    try {
+      const response = await fetch(`${this.apiBase}/${userId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const user = await response.json();
+      this.showEditModal(user);
+    } catch (error) {
+      console.error('Error loading user for edit:', error);
+      showToast('Erro ao carregar dados do usuário para edição', 'danger');
+    }
   }
 
   async deleteUser(userId) {

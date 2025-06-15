@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const userSchema = Joi.object({
-  id: Joi.number().integer().positive(),
+  id: Joi.string().uuid(),
   name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().required()
 });
@@ -27,10 +27,18 @@ class UserModel {
   }
 
   static validateId(id) {
-    if (!id || isNaN(id) || parseInt(id) <= 0) {
-      throw new Error('ID inválido');
+    if (!id || typeof id !== 'string') {
+      throw new Error('ID é obrigatório');
     }
-    return parseInt(id);
+    
+    // UUID v4 regex pattern
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(id)) {
+      throw new Error('ID inválido - deve ser um UUID válido');
+    }
+    
+    return id;
   }
 
   static validateEmail(email) {

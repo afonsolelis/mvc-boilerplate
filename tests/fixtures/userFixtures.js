@@ -1,21 +1,27 @@
 const userFixtures = {
   validUsers: [
     {
-      id: 1,
+      id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'John Doe',
       email: 'john.doe@example.com'
     },
     {
-      id: 2,
+      id: '123e4567-e89b-12d3-a456-426614174001',
       name: 'Jane Smith', 
       email: 'jane.smith@example.com'
     },
     {
-      id: 3,
+      id: '123e4567-e89b-12d3-a456-426614174002',
       name: 'Bob Wilson',
       email: 'bob.wilson@example.com'
     }
   ],
+
+  validUUIDs: {
+    valid: '123e4567-e89b-12d3-a456-426614174000',
+    another: '123e4567-e89b-12d3-a456-426614174001',
+    nonExistent: '999e4567-e89b-12d3-a456-426614174999'
+  },
 
   newUser: {
     name: 'Alice Johnson',

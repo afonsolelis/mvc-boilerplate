@@ -26,6 +26,7 @@ END;
 $$ language 'plpgsql';
 
 -- Criar trigger para atualizar updated_at automaticamente
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at 
     BEFORE UPDATE ON users 
     FOR EACH ROW 
@@ -64,6 +65,7 @@ END;
 $$ language 'plpgsql';
 
 -- Trigger de auditoria
+DROP TRIGGER IF EXISTS users_audit_trigger ON users;
 CREATE TRIGGER users_audit_trigger
     AFTER INSERT OR UPDATE OR DELETE ON users
     FOR EACH ROW EXECUTE FUNCTION audit_users();

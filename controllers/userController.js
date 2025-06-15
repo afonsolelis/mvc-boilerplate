@@ -1,3 +1,5 @@
+const ErrorHandler = require('../helpers/errorHandler');
+
 class UserController {
   constructor(userService) {
     this.userService = userService;
@@ -8,7 +10,7 @@ class UserController {
       const users = await this.userService.getAllUsers();
       return res.status(200).json(users);
     } catch (error) {
-      this._handleError(error, res);
+      ErrorHandler.handleControllerError(error, res);
     }
   }
 
@@ -25,7 +27,7 @@ class UserController {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
     } catch (error) {
-      this._handleError(error, res);
+      ErrorHandler.handleControllerError(error, res);
     }
   }
 
@@ -39,7 +41,7 @@ class UserController {
       const newUser = await this.userService.createUser(userData);
       return res.status(201).json(newUser);
     } catch (error) {
-      this._handleError(error, res);
+      ErrorHandler.handleControllerError(error, res);
     }
   }
 
@@ -61,7 +63,7 @@ class UserController {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
     } catch (error) {
-      this._handleError(error, res);
+      ErrorHandler.handleControllerError(error, res);
     }
   }
 
@@ -78,36 +80,10 @@ class UserController {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
     } catch (error) {
-      this._handleError(error, res);
+      ErrorHandler.handleControllerError(error, res);
     }
   }
 
-  _handleError(error, res) {
-    const errorMessage = error.message || 'Erro interno do servidor';
-    
-    if (errorMessage.includes('validação') || 
-        errorMessage.includes('ID inválido') ||
-        errorMessage.includes('Email inválido')) {
-      return res.status(400).json({ error: errorMessage });
-    }
-    
-    if (errorMessage.includes('já existe') || 
-        errorMessage.includes('já está em uso')) {
-      return res.status(409).json({ error: errorMessage });
-    }
-    
-    if (errorMessage.includes('não encontrado')) {
-      return res.status(404).json({ error: errorMessage });
-    }
-
-    if (errorMessage.includes('conexão') || 
-        errorMessage.includes('timeout') ||
-        errorMessage.includes('banco')) {
-      return res.status(503).json({ error: 'Serviço temporariamente indisponível' });
-    }
-    
-    return res.status(500).json({ error: 'Erro interno do servidor' });
-  }
 }
 
 module.exports = UserController;

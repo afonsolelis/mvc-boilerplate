@@ -22,10 +22,7 @@ describe('UserService', () => {
   describe('getAllUsers', () => {
     test('deve retornar todos os usuários', async () => {
       // Arrange
-      const mockUsers = userFixtures.validUsers.map((user, index) => ({
-        id: index + 1,
-        ...user
-      }));
+      const mockUsers = userFixtures.validUsers;
       mockUserRepository.findAll.mockResolvedValue(mockUsers);
 
       // Act
@@ -48,14 +45,15 @@ describe('UserService', () => {
   describe('getUserById', () => {
     test('deve retornar o usuário correto', async () => {
       // Arrange
-      const mockUser = { id: 1, name: 'John Doe', email: 'john.doe@example.com' };
+      const userId = userFixtures.validUUIDs.valid;
+      const mockUser = { id: userId, name: 'John Doe', email: 'john.doe@example.com' };
       mockUserRepository.findById.mockResolvedValue(mockUser);
 
       // Act
-      const user = await userService.getUserById('1');
+      const user = await userService.getUserById(userId);
 
       // Assert
-      expect(mockUserRepository.findById).toHaveBeenCalledWith(1);
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
       expect(user).toEqual(mockUser);
     });
 
@@ -67,10 +65,11 @@ describe('UserService', () => {
 
     test('deve retornar null para usuário não encontrado', async () => {
       // Arrange
+      const userId = userFixtures.validUUIDs.nonExistent;
       mockUserRepository.findById.mockResolvedValue(null);
 
       // Act
-      const user = await userService.getUserById('999');
+      const user = await userService.getUserById(userId);
 
       // Assert
       expect(user).toBeNull();
@@ -81,7 +80,7 @@ describe('UserService', () => {
     test('deve criar um novo usuário', async () => {
       // Arrange
       const newUserData = userFixtures.newUser;
-      const mockCreatedUser = { id: 4, ...newUserData };
+      const mockCreatedUser = { id: userFixtures.validUUIDs.valid, ...newUserData };
       mockUserRepository.findByEmail.mockResolvedValue(null);
       mockUserRepository.create.mockResolvedValue(mockCreatedUser);
 
@@ -96,7 +95,7 @@ describe('UserService', () => {
 
     test('deve rejeitar usuário com email duplicado', async () => {
       // Arrange
-      const existingUser = { id: 1, name: 'Existing', email: 'john.doe@example.com' };
+      const existingUser = { id: userFixtures.validUUIDs.valid, name: 'Existing', email: 'john.doe@example.com' };
       mockUserRepository.findByEmail.mockResolvedValue(existingUser);
 
       // Act & Assert
@@ -123,56 +122,61 @@ describe('UserService', () => {
   describe('updateUser', () => {
     test('deve atualizar um usuário', async () => {
       // Arrange
+      const userId = userFixtures.validUUIDs.valid;
       const updateData = userFixtures.updatedUser;
-      const existingUser = { id: 1, name: 'Old Name', email: 'old@example.com' };
-      const mockUpdatedUser = { id: 1, ...updateData };
+      const existingUser = { id: userId, name: 'Old Name', email: 'old@example.com' };
+      const mockUpdatedUser = { id: userId, ...updateData };
       
       mockUserRepository.findById.mockResolvedValue(existingUser);
       mockUserRepository.findByEmail.mockResolvedValue(null);
       mockUserRepository.update.mockResolvedValue(mockUpdatedUser);
 
       // Act
-      const updatedUser = await userService.updateUser('1', updateData);
+      const updatedUser = await userService.updateUser(userId, updateData);
 
       // Assert
-      expect(mockUserRepository.findById).toHaveBeenCalledWith(1);
-      expect(mockUserRepository.update).toHaveBeenCalledWith(1, updateData);
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
+      expect(mockUserRepository.update).toHaveBeenCalledWith(userId, updateData);
       expect(updatedUser).toEqual(mockUpdatedUser);
     });
 
     test('deve rejeitar atualização com email duplicado', async () => {
       // Arrange
-      const existingUser = { id: 2, name: 'Other User', email: 'john.doe@example.com' };
-      mockUserRepository.findById.mockResolvedValue({ id: 1, name: 'User 1', email: 'user1@example.com' });
+      const userId1 = userFixtures.validUUIDs.valid;
+      const userId2 = userFixtures.validUUIDs.another;
+      const existingUser = { id: userId2, name: 'Other User', email: 'john.doe@example.com' };
+      mockUserRepository.findById.mockResolvedValue({ id: userId1, name: 'User 1', email: 'user1@example.com' });
       mockUserRepository.findByEmail.mockResolvedValue(existingUser);
 
       // Act & Assert
-      await expect(userService.updateUser('1', { email: 'john.doe@example.com' }))
+      await expect(userService.updateUser(userId1, { email: 'john.doe@example.com' }))
         .rejects.toThrow('Email já está em uso por outro usuário');
       expect(mockUserRepository.update).not.toHaveBeenCalled();
     });
 
     test('deve rejeitar ID inexistente', async () => {
       // Arrange
+      const userId = userFixtures.validUUIDs.nonExistent;
       mockUserRepository.findById.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(userService.updateUser('999', { name: 'Test' }))
+      await expect(userService.updateUser(userId, { name: 'Test' }))
         .rejects.toThrow('Usuário não encontrado');
       expect(mockUserRepository.update).not.toHaveBeenCalled();
     });
 
     test('deve permitir atualizar com o mesmo email do usuário', async () => {
       // Arrange
-      const existingUser = { id: 1, name: 'User', email: 'user@example.com' };
-      const mockUpdatedUser = { id: 1, name: 'Updated User', email: 'user@example.com' };
+      const userId = userFixtures.validUUIDs.valid;
+      const existingUser = { id: userId, name: 'User', email: 'user@example.com' };
+      const mockUpdatedUser = { id: userId, name: 'Updated User', email: 'user@example.com' };
       
       mockUserRepository.findById.mockResolvedValue(existingUser);
       mockUserRepository.findByEmail.mockResolvedValue(existingUser);
       mockUserRepository.update.mockResolvedValue(mockUpdatedUser);
 
       // Act
-      const updatedUser = await userService.updateUser('1', { name: 'Updated User' });
+      const updatedUser = await userService.updateUser(userId, { name: 'Updated User' });
 
       // Assert
       expect(updatedUser).toEqual(mockUpdatedUser);
@@ -182,16 +186,17 @@ describe('UserService', () => {
   describe('deleteUser', () => {
     test('deve deletar um usuário', async () => {
       // Arrange
-      const mockDeletedUser = { id: 1, name: 'John Doe', email: 'john.doe@example.com' };
-      mockUserRepository.findById.mockResolvedValue(mockDeletedUser); // Mock para verificar se usuário existe
+      const userId = userFixtures.validUUIDs.valid;
+      const mockDeletedUser = { id: userId, name: 'John Doe', email: 'john.doe@example.com' };
+      mockUserRepository.findById.mockResolvedValue(mockDeletedUser);
       mockUserRepository.delete.mockResolvedValue(mockDeletedUser);
 
       // Act
-      const deletedUser = await userService.deleteUser('1');
+      const deletedUser = await userService.deleteUser(userId);
 
       // Assert
-      expect(mockUserRepository.findById).toHaveBeenCalledWith(1);
-      expect(mockUserRepository.delete).toHaveBeenCalledWith(1);
+      expect(mockUserRepository.findById).toHaveBeenCalledWith(userId);
+      expect(mockUserRepository.delete).toHaveBeenCalledWith(userId);
       expect(deletedUser).toEqual(mockDeletedUser);
     });
 
@@ -204,16 +209,16 @@ describe('UserService', () => {
 
     test('deve rejeitar ID inexistente', async () => {
       // Arrange
-      mockUserRepository.findById.mockResolvedValue(null); // Usuário não existe
+      const userId = userFixtures.validUUIDs.nonExistent;
+      mockUserRepository.findById.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(userService.deleteUser('999'))
+      await expect(userService.deleteUser(userId))
         .rejects.toThrow('Usuário não encontrado');
       expect(mockUserRepository.delete).not.toHaveBeenCalled();
     });
   });
 
-  // Testes para casos de erro não cobertos
   describe('Constructor', () => {
     test('deve lançar erro quando userRepository não fornecido', () => {
       // Act & Assert
@@ -261,18 +266,20 @@ describe('UserService', () => {
 
       test('deve tratar erro de conexão', async () => {
         // Arrange
+        const userId = userFixtures.validUUIDs.valid;
         mockUserRepository.findById.mockRejectedValue(new Error('Erro de conexão com banco'));
 
         // Act & Assert
-        await expect(userService.getUserById('1')).rejects.toThrow('Erro de conexão com o banco de dados');
+        await expect(userService.getUserById(userId)).rejects.toThrow('Erro de conexão com o banco de dados');
       });
 
       test('deve tratar erro genérico', async () => {
         // Arrange
+        const userId = userFixtures.validUUIDs.valid;
         mockUserRepository.findById.mockRejectedValue(new Error('Erro genérico'));
 
         // Act & Assert
-        await expect(userService.getUserById('1')).rejects.toThrow('Erro no serviço ao obter usuário');
+        await expect(userService.getUserById(userId)).rejects.toThrow('Erro no serviço ao obter usuário');
       });
     });
 
@@ -321,36 +328,42 @@ describe('UserService', () => {
       });
 
       test('deve lançar erro quando userData inválido', async () => {
+        // Arrange
+        const userId = userFixtures.validUUIDs.valid;
+
         // Act & Assert
-        await expect(userService.updateUser('1', null)).rejects.toThrow('Dados para atualização são obrigatórios');
-        await expect(userService.updateUser('1', 'string')).rejects.toThrow('Dados para atualização são obrigatórios');
-        await expect(userService.updateUser('1', {})).rejects.toThrow('Dados para atualização são obrigatórios');
+        await expect(userService.updateUser(userId, null)).rejects.toThrow('Dados para atualização são obrigatórios');
+        await expect(userService.updateUser(userId, 'string')).rejects.toThrow('Dados para atualização são obrigatórios');
+        await expect(userService.updateUser(userId, {})).rejects.toThrow('Dados para atualização são obrigatórios');
       });
 
       test('deve tratar erro quando updatedUser é null', async () => {
         // Arrange
-        const existingUser = { id: 1, name: 'User', email: 'user@example.com' };
+        const userId = userFixtures.validUUIDs.valid;
+        const existingUser = { id: userId, name: 'User', email: 'user@example.com' };
         mockUserRepository.findById.mockResolvedValue(existingUser);
         mockUserRepository.update.mockResolvedValue(null);
 
         // Act & Assert
-        await expect(userService.updateUser('1', { name: 'Updated' })).rejects.toThrow('Falha ao atualizar usuário');
+        await expect(userService.updateUser(userId, { name: 'Updated' })).rejects.toThrow('Falha ao atualizar usuário');
       });
 
       test('deve tratar erro de conexão', async () => {
         // Arrange
+        const userId = userFixtures.validUUIDs.valid;
         mockUserRepository.findById.mockRejectedValue(new Error('Erro de conexão com banco'));
 
         // Act & Assert
-        await expect(userService.updateUser('1', { name: 'Test' })).rejects.toThrow('Erro de conexão com o banco de dados');
+        await expect(userService.updateUser(userId, { name: 'Test' })).rejects.toThrow('Erro de conexão com o banco de dados');
       });
 
       test('deve tratar erro genérico', async () => {
         // Arrange
+        const userId = userFixtures.validUUIDs.valid;
         mockUserRepository.findById.mockRejectedValue(new Error('Erro genérico'));
 
         // Act & Assert
-        await expect(userService.updateUser('1', { name: 'Test' })).rejects.toThrow('Erro no serviço ao atualizar usuário');
+        await expect(userService.updateUser(userId, { name: 'Test' })).rejects.toThrow('Erro no serviço ao atualizar usuário');
       });
     });
 
@@ -363,28 +376,31 @@ describe('UserService', () => {
 
       test('deve tratar erro quando deletedUser é null', async () => {
         // Arrange
-        const existingUser = { id: 1, name: 'User', email: 'user@example.com' };
+        const userId = userFixtures.validUUIDs.valid;
+        const existingUser = { id: userId, name: 'User', email: 'user@example.com' };
         mockUserRepository.findById.mockResolvedValue(existingUser);
         mockUserRepository.delete.mockResolvedValue(null);
 
         // Act & Assert
-        await expect(userService.deleteUser('1')).rejects.toThrow('Falha ao deletar usuário');
+        await expect(userService.deleteUser(userId)).rejects.toThrow('Falha ao deletar usuário');
       });
 
       test('deve tratar erro de conexão', async () => {
         // Arrange
+        const userId = userFixtures.validUUIDs.valid;
         mockUserRepository.findById.mockRejectedValue(new Error('Erro de conexão com banco'));
 
         // Act & Assert
-        await expect(userService.deleteUser('1')).rejects.toThrow('Erro de conexão com o banco de dados');
+        await expect(userService.deleteUser(userId)).rejects.toThrow('Erro de conexão com o banco de dados');
       });
 
       test('deve tratar erro genérico', async () => {
         // Arrange
+        const userId = userFixtures.validUUIDs.valid;
         mockUserRepository.findById.mockRejectedValue(new Error('Erro genérico'));
 
         // Act & Assert
-        await expect(userService.deleteUser('1')).rejects.toThrow('Erro no serviço ao deletar usuário');
+        await expect(userService.deleteUser(userId)).rejects.toThrow('Erro no serviço ao deletar usuário');
       });
     });
   });
