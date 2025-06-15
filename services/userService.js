@@ -20,6 +20,22 @@ class UserService {
     }
   }
 
+  async getAllUsersByOwner(ownerId) {
+    try {
+      if (!ownerId) {
+        throw new Error('Owner ID é obrigatório');
+      }
+
+      const users = await this.userRepository.findByOwner(ownerId);
+      return users || [];
+    } catch (error) {
+      if (error.message.includes('conexão') || error.message.includes('banco')) {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      throw new Error(`Erro no serviço ao obter usuários do owner: ${error.message}`);
+    }
+  }
+
   async getUserById(id) {
     try {
       if (!id) {
@@ -28,6 +44,29 @@ class UserService {
 
       const validatedId = UserModel.validateId(id);
       const user = await this.userRepository.findById(validatedId);
+      return user || null;
+    } catch (error) {
+      if (error.message.includes('ID inválido')) {
+        throw error;
+      }
+      if (error.message.includes('conexão') || error.message.includes('banco')) {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      throw new Error(`Erro no serviço ao obter usuário: ${error.message}`);
+    }
+  }
+
+  async getUserByIdAndOwner(id, ownerId) {
+    try {
+      if (!id) {
+        throw new Error('ID é obrigatório');
+      }
+      if (!ownerId) {
+        throw new Error('Owner ID é obrigatório');
+      }
+
+      const validatedId = UserModel.validateId(id);
+      const user = await this.userRepository.findByIdAndOwner(validatedId, ownerId);
       return user || null;
     } catch (error) {
       if (error.message.includes('ID inválido')) {
@@ -118,6 +157,55 @@ class UserService {
     }
   }
 
+  async updateUserByOwner(id, userData, ownerId) {
+    try {
+      if (!id) {
+        throw new Error('ID é obrigatório');
+      }
+      if (!ownerId) {
+        throw new Error('Owner ID é obrigatório');
+      }
+
+      if (!userData || typeof userData !== 'object' || Object.keys(userData).length === 0) {
+        throw new Error('Dados para atualização são obrigatórios');
+      }
+
+      const validatedId = UserModel.validateId(id);
+      const validatedData = UserModel.validate(userData, true);
+      
+      const existingUser = await this.userRepository.findByIdAndOwner(validatedId, ownerId);
+      if (!existingUser) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      if (validatedData.email && validatedData.email !== existingUser.email) {
+        const userWithEmail = await this.userRepository.findByEmailAndOwner(validatedData.email, ownerId);
+        if (userWithEmail && userWithEmail.id !== validatedId) {
+          throw new Error('Email já está em uso por outro usuário');
+        }
+      }
+
+      const updatedUser = await this.userRepository.updateByOwner(validatedId, validatedData, ownerId);
+      if (!updatedUser) {
+        throw new Error('Falha ao atualizar usuário');
+      }
+
+      return updatedUser;
+    } catch (error) {
+      if (error.message.includes('validação') || 
+          error.message.includes('não encontrado') ||
+          error.message.includes('já está em uso') ||
+          error.message.includes('obrigatório') ||
+          error.message.includes('ID inválido')) {
+        throw error;
+      }
+      if (error.message.includes('conexão') || error.message.includes('banco')) {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      throw new Error(`Erro no serviço ao atualizar usuário: ${error.message}`);
+    }
+  }
+
   async deleteUser(id) {
     try {
       if (!id) {
@@ -132,6 +220,41 @@ class UserService {
       }
       
       const deletedUser = await this.userRepository.delete(validatedId);
+      if (!deletedUser) {
+        throw new Error('Falha ao deletar usuário');
+      }
+
+      return deletedUser;
+    } catch (error) {
+      if (error.message.includes('não encontrado') ||
+          error.message.includes('obrigatório') ||
+          error.message.includes('ID inválido')) {
+        throw error;
+      }
+      if (error.message.includes('conexão') || error.message.includes('banco')) {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      throw new Error(`Erro no serviço ao deletar usuário: ${error.message}`);
+    }
+  }
+
+  async deleteUserByOwner(id, ownerId) {
+    try {
+      if (!id) {
+        throw new Error('ID é obrigatório');
+      }
+      if (!ownerId) {
+        throw new Error('Owner ID é obrigatório');
+      }
+
+      const validatedId = UserModel.validateId(id);
+      
+      const existingUser = await this.userRepository.findByIdAndOwner(validatedId, ownerId);
+      if (!existingUser) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      const deletedUser = await this.userRepository.deleteByOwner(validatedId, ownerId);
       if (!deletedUser) {
         throw new Error('Falha ao deletar usuário');
       }

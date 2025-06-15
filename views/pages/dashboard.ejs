@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                <span id="user-email"></span>
+                <button id="logout-btn" class="btn-secondary">Sair</button>
+            </div>
+        </header>
+        
+        <main class="dashboard-content">
+            <div class="welcome-message">
+                <h2>Bem-vindo ao Dashboard!</h2>
+                <p>Você está logado com sucesso.</p>
+            </div>
+            
+            <div class="dashboard-actions">
+                <div class="action-card">
+                    <h3>Gerenciar Usuários</h3>
+                    <p>Adicione, edite e gerencie seus usuários</p>
+                    <button class="btn-primary" onclick="window.location.href='/users'">Gerenciar Usuários</button>
+                </div>
+                
+                <div class="action-card">
+                    <h3>Configurações</h3>
+                    <p>Ajuste suas preferências</p>
+                    <button class="btn-primary">Configurar</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            const userEmail = document.getElementById('user-email');
+            
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    userEmail.textContent = data.user.email;
+                } else {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar autenticação:', error);
+                window.location.href = '/login';
+            }
+        });
+        
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/auth/signout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+            } finally {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+                document.cookie = 'access_token=; path=/; max-age=0';
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>

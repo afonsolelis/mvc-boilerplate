@@ -63,7 +63,13 @@ class UserManager {
       tableBody.innerHTML = '';
       tableBody.appendChild(loadingRow);
 
-      const response = await fetch(this.apiBase);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(this.apiBase, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -177,7 +183,12 @@ class UserManager {
 
   async viewUser(userId) {
     try {
-      const response = await fetch(`${this.apiBase}/${userId}`);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${this.apiBase}/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -310,9 +321,11 @@ class UserManager {
       const email = document.getElementById('editUserEmail').value.trim();
       const userId = this.currentUser.id;
 
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`${this.apiBase}/${userId}`, {
         method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name, email })
@@ -440,9 +453,11 @@ class UserManager {
       const name = document.getElementById('userName').value.trim();
       const email = document.getElementById('userEmail').value.trim();
 
+      const token = localStorage.getItem('access_token');
       const response = await fetch(this.apiBase, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name, email })
@@ -480,7 +495,12 @@ class UserManager {
 
   async editUser(userId) {
     try {
-      const response = await fetch(`${this.apiBase}/${userId}`);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${this.apiBase}/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -500,8 +520,12 @@ class UserManager {
     }
 
     try {
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`${this.apiBase}/${userId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {

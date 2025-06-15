@@ -7,7 +7,12 @@ class UserController {
 
   async getAllUsers(req, res) {
     try {
-      const users = await this.userService.getAllUsers();
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+      
+      const users = await this.userService.getAllUsersByOwner(userId);
       return res.status(200).json(users);
     } catch (error) {
       ErrorHandler.handleControllerError(error, res);
@@ -20,7 +25,12 @@ class UserController {
         return res.status(400).json({ error: 'ID é obrigatório' });
       }
 
-      const user = await this.userService.getUserById(req.params.id);
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const user = await this.userService.getUserByIdAndOwner(req.params.id, userId);
       if (user) {
         return res.status(200).json(user);
       } else {
@@ -37,7 +47,12 @@ class UserController {
         return res.status(400).json({ error: 'Dados do usuário são obrigatórios' });
       }
 
-      const userData = req.body;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const userData = { ...req.body, owner_id: userId };
       const newUser = await this.userService.createUser(userData);
       return res.status(201).json(newUser);
     } catch (error) {
@@ -55,8 +70,13 @@ class UserController {
         return res.status(400).json({ error: 'Dados para atualização são obrigatórios' });
       }
 
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
       const userData = req.body;
-      const updatedUser = await this.userService.updateUser(req.params.id, userData);
+      const updatedUser = await this.userService.updateUserByOwner(req.params.id, userData, userId);
       if (updatedUser) {
         return res.status(200).json(updatedUser);
       } else {
@@ -73,7 +93,12 @@ class UserController {
         return res.status(400).json({ error: 'ID é obrigatório' });
       }
 
-      const deletedUser = await this.userService.deleteUser(req.params.id);
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
+      }
+
+      const deletedUser = await this.userService.deleteUserByOwner(req.params.id, userId);
       if (deletedUser) {
         return res.status(200).json({ message: 'Usuário deletado com sucesso', user: deletedUser });
       } else {

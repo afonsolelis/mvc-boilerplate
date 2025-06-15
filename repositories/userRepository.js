@@ -57,10 +57,15 @@ class UserRepository {
         throw new Error('Nome e email são obrigatórios');
       }
 
-      const result = await this.db.query(
-        'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
-        [userData.name, userData.email]
-      );
+      const query = userData.owner_id 
+        ? 'INSERT INTO users (name, email, owner_id) VALUES ($1, $2, $3) RETURNING *'
+        : 'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *';
+      
+      const values = userData.owner_id 
+        ? [userData.name, userData.email, userData.owner_id]
+        : [userData.name, userData.email];
+
+      const result = await this.db.query(query, values);
 
       if (!result.rows || result.rows.length === 0) {
         throw new Error('Falha ao criar usuário no banco de dados');
@@ -109,6 +114,10 @@ class UserRepository {
       if (userData.email !== undefined) {
         fields.push(`email = $${paramCount++}`);
         values.push(userData.email);
+      }
+      if (userData.owner_id !== undefined) {
+        fields.push(`owner_id = $${paramCount++}`);
+        values.push(userData.owner_id);
       }
 
       if (fields.length === 0) {
@@ -183,6 +192,148 @@ class UserRepository {
         throw error;
       }
       throw new Error(`Erro ao buscar usuário por email: ${error.message}`);
+    }
+  }
+
+  async findByOwner(ownerId) {
+    try {
+      if (!this.db) {
+        throw new Error('Conexão com banco de dados não disponível');
+      }
+
+      if (!ownerId) {
+        throw new Error('Owner ID é obrigatório para busca');
+      }
+
+      const result = await this.db.query('SELECT * FROM users WHERE owner_id = $1 ORDER BY id', [ownerId]);
+      return result.rows || [];
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      if (error.message.includes('obrigatório')) {
+        throw error;
+      }
+      throw new Error(`Erro ao buscar usuários por owner: ${error.message}`);
+    }
+  }
+
+  async findByIdAndOwner(id, ownerId) {
+    try {
+      if (!this.db) {
+        throw new Error('Conexão com banco de dados não disponível');
+      }
+
+      if (!id || !ownerId) {
+        throw new Error('ID e Owner ID são obrigatórios para busca');
+      }
+
+      const result = await this.db.query('SELECT * FROM users WHERE id = $1 AND owner_id = $2', [id, ownerId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      if (error.message.includes('obrigatório')) {
+        throw error;
+      }
+      throw new Error(`Erro ao buscar usuário por ID e owner: ${error.message}`);
+    }
+  }
+
+  async findByEmailAndOwner(email, ownerId) {
+    try {
+      if (!this.db) {
+        throw new Error('Conexão com banco de dados não disponível');
+      }
+
+      if (!email || !ownerId) {
+        throw new Error('Email e Owner ID são obrigatórios para busca');
+      }
+
+      const result = await this.db.query('SELECT * FROM users WHERE email = $1 AND owner_id = $2', [email, ownerId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      if (error.message.includes('obrigatório')) {
+        throw error;
+      }
+      throw new Error(`Erro ao buscar usuário por email e owner: ${error.message}`);
+    }
+  }
+
+  async updateByOwner(id, userData, ownerId) {
+    try {
+      if (!this.db) {
+        throw new Error('Conexão com banco de dados não disponível');
+      }
+
+      if (!id || !ownerId) {
+        throw new Error('ID e Owner ID são obrigatórios para atualização');
+      }
+
+      if (!userData || typeof userData !== 'object') {
+        throw new Error('Dados para atualização são obrigatórios');
+      }
+
+      const fields = [];
+      const values = [];
+      let paramCount = 1;
+
+      if (userData.name !== undefined) {
+        fields.push(`name = $${paramCount++}`);
+        values.push(userData.name);
+      }
+      if (userData.email !== undefined) {
+        fields.push(`email = $${paramCount++}`);
+        values.push(userData.email);
+      }
+
+      if (fields.length === 0) {
+        throw new Error('Nenhum campo para atualizar');
+      }
+
+      values.push(id, ownerId);
+      const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${paramCount++} AND owner_id = $${paramCount} RETURNING *`;
+      
+      const result = await this.db.query(query, values);
+      return result.rows[0] || null;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      if (error.code === '23505') {
+        throw new Error('Email já está em uso');
+      }
+      if (error.message.includes('obrigatório') || error.message.includes('Nenhum campo')) {
+        throw error;
+      }
+      throw new Error(`Erro ao atualizar usuário: ${error.message}`);
+    }
+  }
+
+  async deleteByOwner(id, ownerId) {
+    try {
+      if (!this.db) {
+        throw new Error('Conexão com banco de dados não disponível');
+      }
+
+      if (!id || !ownerId) {
+        throw new Error('ID e Owner ID são obrigatórios para exclusão');
+      }
+
+      const result = await this.db.query('DELETE FROM users WHERE id = $1 AND owner_id = $2 RETURNING *', [id, ownerId]);
+      return result.rows[0] || null;
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        throw new Error('Erro de conexão com o banco de dados');
+      }
+      if (error.message.includes('obrigatório')) {
+        throw error;
+      }
+      throw new Error(`Erro ao deletar usuário: ${error.message}`);
     }
   }
 }

@@ -1,11 +1,22 @@
 require('dotenv').config();
 const express = require('express');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const app = express();
 const path = require('path');
 const ServerErrorHandler = require('./helpers/serverErrorHandler');
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Middleware
+app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+}));
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -21,6 +32,9 @@ async function startServer() {
 
   const userRoutes = require('./routes/userRoutes');
   app.use('/users', userRoutes);
+
+  const authRoutes = require('./routes/authRoutes');
+  app.use('/auth', authRoutes);
 
   const frontendRoutes = require('./routes/frontRoutes');
   app.use('/', frontendRoutes);

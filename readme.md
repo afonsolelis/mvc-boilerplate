@@ -1,11 +1,13 @@
-# MVC Boilerplate - Node.js com PostgreSQL
+# MVC Boilerplate - Node.js com PostgreSQL e Autenticação Supabase
 
-Uma aplicação completa seguindo o padrão MVC (Model-View-Controller) com Node.js, Express, PostgreSQL e interface web com EJS.
+Uma aplicação completa seguindo o padrão MVC (Model-View-Controller) com Node.js, Express, PostgreSQL, autenticação via Supabase e interface web com EJS.
 
 ## 🚀 Funcionalidades
 
-- **CRUD Completo de Usuários**: API REST para gerenciamento de usuários
-- **Interface Web**: Frontend com EJS para visualização dos dados
+- **Autenticação Completa**: Sistema de login/registro usando Supabase Auth
+- **Isolamento de Dados**: Cada usuário vê apenas seus próprios dados
+- **CRUD Protegido**: API REST para gerenciamento de usuários com autenticação
+- **Interface Web Moderna**: Frontend responsivo com EJS e CSS moderno
 - **Padrão MVC**: Arquitetura bem estruturada e organizada
 - **Validação de Dados**: Validação usando Joi
 - **Testes Automatizados**: Cobertura completa com Jest
@@ -17,6 +19,7 @@ Uma aplicação completa seguindo o padrão MVC (Model-View-Controller) com Node
 - Node.js (versão 14 ou superior)
 - Docker e Docker Compose (recomendado)
 - **OU** PostgreSQL (versão 12 ou superior) instalado localmente
+- Conta no Supabase (gratuita)
 
 ## 🛠️ Instalação
 
@@ -32,33 +35,47 @@ npm install
 ```
 
 3. **Configure as variáveis de ambiente:**
-O projeto já inclui um arquivo `.env` configurado para Docker. Se precisar modificar:
+Copie o arquivo `.env.example` para `.env` e configure:
+```bash
+cp .env.example .env
+```
+
+O arquivo `.env` deve conter:
 ```env
-# PostgreSQL Database Configuration
-DB_NAME=mvc_database
-DB_DATABASE=mvc_database
-DB_USER=mvc_user
-DB_PASSWORD=mvc_password
+# Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
+DB_DATABASE=mvc_boilerplate
+DB_USER=postgres
+DB_PASSWORD=password
+DB_SSL=false
 
-# Adminer runs without additional configuration
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Supabase Configuration
+SUPABASE_URL=https://szdwjfsvagomhwjxqsqr.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6ZHdqZnN2YWdvbWh3anhxc3FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMTIwNTYsImV4cCI6MjA1Njc4ODA1Nn0.W0l_r1v95z4frdfq-XxL014UUmEJ9mFzTsdK8Wa_Wew
+
+# Site Configuration
+SITE_URL=http://localhost:3000
+
+# Session Secret (altere para produção)
+SESSION_SECRET=your-super-secret-key-change-this-in-production
 ```
 
-4. **Inicie o banco de dados com Docker:**
+4. **Configure o banco de dados:**
 ```bash
-# Sobe PostgreSQL e Adminer
+# Sobe PostgreSQL com Docker
 npm run docker:up
 
-# Executa a migração (desenvolvimento com dados de teste)
+# Executa a migração base
 npm run migrate:dev
 
-# OU para produção (sem dados de teste)
-npm run migrate:prod
+# Adiciona a coluna owner_id para isolamento de dados
+psql -h localhost -U postgres -d mvc_boilerplate -f scripts/add-owner-column.sql
 ```
-
-**Alternativa sem Docker:**
-Se preferir usar PostgreSQL local, ajuste as variáveis no `.env` e execute a migração.
 
 ## 🎯 Como Usar
 
@@ -73,22 +90,27 @@ npm start
 
 ### Executar testes
 ```bash
-# Todos os testes (usando mocks - não precisa de banco)
+# Todos os testes
 npm test
 
 # Com cobertura de código
 npm run test:coverage
 ```
 
-Os testes são executados de forma **independente** e **rápida**, sem necessidade de configuração de banco de dados, tornando o desenvolvimento mais acessível para iniciantes.
+## 🔐 Sistema de Autenticação
 
-### 📚 Vantagens dos Testes com Mocks
+### Fluxo de Autenticação
+1. **Registro**: Usuários se registram via `/register`
+2. **Login**: Autenticação via `/login` com Supabase
+3. **Proteção**: Todas as rotas são protegidas por middleware
+4. **Isolamento**: Cada usuário vê apenas seus próprios dados
+5. **Logout**: Limpeza de sessão e redirecionamento
 
-- **Facilidade de Aprendizado**: Ideal para estudantes de primeiro ano
-- **Execução Rápida**: Testes executam em segundos 
-- **Sem Dependências**: Não precisa de Docker, PostgreSQL ou configurações complexas
-- **Foco no Código**: Aprenda lógica de negócio sem se preocupar com infraestrutura
-- **Ambiente Controlado**: Dados previsíveis e cenários de teste claros
+### Páginas Disponíveis
+- `GET /` - Página inicial
+- `GET /login` - Página de login
+- `GET /register` - Página de registro
+- `GET /dashboard` - Dashboard do usuário (protegido)
 
 ## 🌐 Endpoints da API
 

@@ -8,12 +8,14 @@ const userSchema = Joi.object({
 
 const userCreateSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
-  email: Joi.string().email().required()
+  email: Joi.string().email().required(),
+  owner_id: Joi.string().uuid().optional()
 });
 
 const userUpdateSchema = Joi.object({
   name: Joi.string().min(2).max(100),
-  email: Joi.string().email()
+  email: Joi.string().email(),
+  owner_id: Joi.string().uuid()
 }).min(1);
 
 class UserModel {
